@@ -1,0 +1,240 @@
+CREATE DATABASE IF NOT EXISTS cfjx_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+USE cfjx_db;
+
+-- 商品表
+CREATE TABLE IF NOT EXISTS goods (
+    id INT AUTO_INCREMENT PRIMARY KEY COMMENT '商品ID',
+    shopId INT NOT NULL COMMENT '店铺ID',
+    name VARCHAR(200) NOT NULL COMMENT '商品名称',
+    imgUrl VARCHAR(300) NOT NULL COMMENT '商品图片URL',
+    cprice DOUBLE not null COMMENT '当前价格',
+    oprice DOUBLE not null COMMENT '原价',
+    discount DOUBLE not null COMMENT '折扣',
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'
+) COMMENT='商品表';
+
+-- 创建索引以提高查询性能
+CREATE INDEX idx_name ON goods(id);
+CREATE INDEX idx_shopId ON goods(shopId);
+CREATE INDEX idx_create_time ON goods(create_time);
+
+-- 插入商品数据
+INSERT INTO goods (shopId, name, imgUrl, cprice, oprice, discount) VALUES
+(1, '波司登25年羽绒服男士秋冬90绒轻薄圆领修身短款休闲送礼物外套', '/static/image/common/commodity1.jpg', 299, 599, 4.9),
+(1, '罗蒙（ROMON）纯色商务职业正装男士白衬衫工装外套长袖衬衣男CS108白色XL', '/static/image/common/commodity2.jpg', 299, 599, 4.9),
+(2, '拓路者轻薄立领羽绒服男冬季新款轻薄羽绒外套户外登山服徒步穿搭上衣', '/static/image/common/commodity3.jpg', 299, 599, 4.9),
+(2, 'JEEP SPIRIT吉普90鸭绒羽绒裤男冬季保暖防水防风工装休闲裤男裤 雪山白 XL', '/static/image/common/commodity4.jpg', 299, 599, 4.9);
+
+-- 创建店铺
+CREATE TABLE IF NOT EXISTS shop (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(200) NOT NULL,
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 创建索引
+CREATE INDEX idx_name ON shop(id);
+
+INSERT INTO shop (name) VALUES
+('津维佳达成人用品专营店'),
+('太湖雪床上用品专卖店');
+
+-- 用户表
+CREATE TABLE IF NOT EXISTS user (
+    id INT AUTO_INCREMENT PRIMARY KEY COMMENT '用户ID',
+    username VARCHAR(50) UNIQUE COMMENT '用户名',
+    password VARCHAR(255) COMMENT '密码（加密存储）',
+    phone VARCHAR(20) UNIQUE  NOT NULL COMMENT '手机号',
+    nickname VARCHAR(50) COMMENT '昵称',
+    avatar VARCHAR(300) COMMENT '头像URL',
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'
+) COMMENT='用户表';
+
+-- 创建用户表索引
+CREATE INDEX idx_username ON user(username);
+CREATE INDEX idx_phone ON user(phone);
+CREATE INDEX idx_create_time ON user(create_time);
+
+-- 插入示例用户数据（密码为123456的MD5加密值）
+INSERT INTO user (username, password, phone, nickname) VALUES 
+('test', 'e10adc3949ba59abbe56e057f20f883e', '13800138000', '测试用户'),
+('admin', 'e10adc3949ba59abbe56e057f20f883e', '13900139000', '管理员');
+
+-- 第三方登录关联表（极简版）
+CREATE TABLE IF NOT EXISTS user_third_party (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL COMMENT '用户ID',
+    platform VARCHAR(20) NOT NULL COMMENT '平台：wechat/weibo/qq',
+    openid VARCHAR(100) NOT NULL COMMENT '第三方用户标识',
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    -- 确保同一个平台的同一个openid只能绑定一个用户
+    UNIQUE KEY uk_platform_openid (platform, openid),
+    INDEX idx_user_id (user_id)
+) COMMENT='用户第三方登录关联表';
+
+-- 收货地址表
+CREATE TABLE IF NOT EXISTS address (
+    id INT AUTO_INCREMENT PRIMARY KEY COMMENT '地址ID',
+    user_id INT NOT NULL COMMENT '用户ID',
+    receiver_name VARCHAR(50) NOT NULL COMMENT '收货人姓名',
+    receiver_phone VARCHAR(20) NOT NULL COMMENT '收货人手机号',
+    province VARCHAR(50) NOT NULL COMMENT '省份',
+    city VARCHAR(50) NOT NULL COMMENT '城市',
+    area VARCHAR(50) NOT NULL COMMENT '区域',
+    full_address VARCHAR(200) NOT NULL COMMENT '详细地址',
+    is_default TINYINT(1) DEFAULT 0 COMMENT '是否默认地址：0-否，1-是',
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    
+    -- 外键约束（可选，确保用户存在）
+    FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
+    -- 索引
+    INDEX idx_user_id (user_id),
+    INDEX idx_is_default (is_default),
+    INDEX idx_create_time (create_time)
+) COMMENT='收货地址表';
+
+-- 购物车表（只存储商品级别的勾选状态，店铺勾选状态由业务逻辑计算）
+CREATE TABLE IF NOT EXISTS cart (
+    id INT AUTO_INCREMENT PRIMARY KEY COMMENT '购物车记录ID',
+    userId INT NOT NULL COMMENT '用户ID，关联user表',
+    shopId INT NOT NULL COMMENT '店铺ID，关联shop表',
+    goodId INT NOT NULL COMMENT '商品ID，关联goods表',
+    num INT NOT NULL DEFAULT 1 COMMENT '商品数量',
+    checked TINYINT(1) DEFAULT 0 COMMENT '商品选中状态：0-未选中，1-选中',
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    
+    -- 唯一约束：同一用户同一商品只能有一条记录
+    UNIQUE KEY uk_user_goods (userId, goodId),
+    -- 外键约束（确保关联数据存在）
+    FOREIGN KEY (userId) REFERENCES user(id) ON DELETE CASCADE,
+    FOREIGN KEY (shopId) REFERENCES shop(id) ON DELETE CASCADE,
+    FOREIGN KEY (goodId) REFERENCES goods(id) ON DELETE CASCADE,
+    -- 索引优化
+    INDEX idx_userId (userId) COMMENT '按用户ID查询索引',
+    INDEX idx_shopId (shopId) COMMENT '按店铺ID查询索引',
+    INDEX idx_goodId (goodId) COMMENT '按商品ID查询索引',
+    INDEX idx_checked (checked) COMMENT '按选中状态查询索引',
+    INDEX idx_create_time (create_time) COMMENT '按创建时间查询索引'
+) COMMENT='购物车表，存储用户购物车中的商品信息';
+
+-- 订单表
+CREATE TABLE IF NOT EXISTS `orders` (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '订单ID',
+    order_no VARCHAR(32) UNIQUE NOT NULL COMMENT '订单号（业务唯一标识）',
+    user_id INT NOT NULL COMMENT '用户ID',
+    total_amount DECIMAL(10,2) NOT NULL COMMENT '订单总金额',
+    freight_amount DECIMAL(10,2) DEFAULT 0.00 COMMENT '运费金额',
+    discount_amount DECIMAL(10,2) DEFAULT 0.00 COMMENT '优惠金额',
+    pay_amount DECIMAL(10,2) NOT NULL COMMENT '实际支付金额',
+    address_id INT NOT NULL COMMENT '收货地址ID',
+    receiver_name VARCHAR(50) NOT NULL COMMENT '收货人姓名',
+    receiver_phone VARCHAR(20) NOT NULL COMMENT '收货人手机号',
+    receiver_province VARCHAR(50) NOT NULL COMMENT '省份',
+    receiver_city VARCHAR(50) NOT NULL COMMENT '城市',
+    receiver_area VARCHAR(50) NOT NULL COMMENT '区域',
+    receiver_full_address VARCHAR(200) NOT NULL COMMENT '详细地址',
+    order_status TINYINT NOT NULL DEFAULT 0 COMMENT '订单状态：0-待支付，1-已支付，2-已发货，3-已完成，4-已关闭，5-退款中，6-已退款',
+    pay_status TINYINT NOT NULL DEFAULT 0 COMMENT '支付状态：0-未支付，1-已支付',
+    pay_type TINYINT NULL COMMENT '支付方式：1-支付宝，2-微信',
+    pay_time TIMESTAMP NULL COMMENT '支付时间',
+    delivery_time TIMESTAMP NULL COMMENT '发货时间',
+    receive_time TIMESTAMP NULL COMMENT '确认收货时间',
+    close_time TIMESTAMP NULL COMMENT '订单关闭时间',
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    
+    -- 外键约束
+    FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
+    FOREIGN KEY (address_id) REFERENCES address(id) ON DELETE RESTRICT,
+    
+    -- 索引
+    INDEX idx_order_no (order_no) COMMENT '订单号索引',
+    INDEX idx_user_id (user_id) COMMENT '用户ID索引',
+    INDEX idx_order_status (order_status) COMMENT '订单状态索引',
+    INDEX idx_pay_status (pay_status) COMMENT '支付状态索引',
+    INDEX idx_create_time (create_time) COMMENT '创建时间索引',
+    INDEX idx_pay_time (pay_time) COMMENT '支付时间索引'
+) COMMENT='订单主表，存储订单基本信息';
+
+-- 订单店铺表（存储每个店铺的留言和金额信息）
+CREATE TABLE IF NOT EXISTS order_shop (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '订单店铺ID',
+    order_id BIGINT NOT NULL COMMENT '订单ID',
+    shop_id INT NOT NULL COMMENT '店铺ID',
+    shop_total_amount DECIMAL(10,2) NOT NULL COMMENT '订单总金额',
+    buyer_message VARCHAR(500) DEFAULT '' COMMENT '买家留言（针对该店铺）',
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    
+    -- 外键约束
+    FOREIGN KEY (order_id) REFERENCES `orders`(id) ON DELETE CASCADE,
+    FOREIGN KEY (shop_id) REFERENCES shop(id) ON DELETE RESTRICT,
+    
+    -- 索引
+    INDEX idx_order_id (order_id) COMMENT '订单ID索引',
+    INDEX idx_shop_id (shop_id) COMMENT '店铺ID索引',
+    UNIQUE KEY uk_order_shop (order_id, shop_id) COMMENT '订单和店铺唯一索引'
+) COMMENT='订单店铺表，存储订单中每个店铺的留言和金额信息';
+
+-- 订单商品明细表
+CREATE TABLE IF NOT EXISTS order_item (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '订单明细ID',
+    order_shop_id BIGINT NOT NULL COMMENT '订单店铺ID',
+    good_id INT NOT NULL COMMENT '商品ID',
+    good_name VARCHAR(200) NOT NULL COMMENT '商品名称（下单时的快照）',
+    good_img_url VARCHAR(300) NOT NULL COMMENT '商品图片（下单时的快照）',
+    good_price DECIMAL(10,2) NOT NULL COMMENT '商品单价（下单时的快照）',
+    quantity INT NOT NULL COMMENT '购买数量',
+    total_amount DECIMAL(10,2) NOT NULL COMMENT '商品总金额',
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    
+    -- 外键约束
+    FOREIGN KEY (order_shop_id) REFERENCES order_shop(id) ON DELETE CASCADE,
+    FOREIGN KEY (good_id) REFERENCES goods(id) ON DELETE RESTRICT,
+    
+    -- 索引
+    INDEX idx_order_shop_id (order_shop_id) COMMENT '订单店铺ID索引',
+    INDEX idx_good_id (good_id) COMMENT '商品ID索引'
+) COMMENT='订单商品明细表，存储订单中的商品信息快照';
+
+-- 订单状态变更日志表
+CREATE TABLE IF NOT EXISTS order_status_log (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '日志ID',
+    order_id BIGINT NOT NULL COMMENT '订单ID',
+    old_status TINYINT NOT NULL COMMENT '原状态：-1-订单创建前，0-待支付，1-已支付，2-已发货，3-已完成，4-已关闭，5-退款中，6-已退款',
+    new_status TINYINT NOT NULL COMMENT '新状态：0-待支付，1-已支付，2-已发货，3-已完成，4-已关闭，5-退款中，6-已退款',
+    remark VARCHAR(500) COMMENT '备注说明',
+    operator VARCHAR(50) COMMENT '操作人',
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    
+    -- 外键约束
+    FOREIGN KEY (order_id) REFERENCES `orders`(id) ON DELETE CASCADE,
+    
+    -- 索引
+    INDEX idx_order_id (order_id) COMMENT '订单ID索引',
+    INDEX idx_create_time (create_time) COMMENT '创建时间索引'
+) COMMENT='订单状态变更日志表，记录订单状态变化历史';
+
+-- 支付记录表
+CREATE TABLE IF NOT EXISTS payment_record (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '支付记录ID',
+    order_id BIGINT NOT NULL COMMENT '订单ID',
+    payment_no VARCHAR(32) UNIQUE NOT NULL COMMENT '支付流水号',
+    pay_type TINYINT NOT NULL COMMENT '支付方式：1-支付宝，2-微信',
+    pay_amount DECIMAL(10,2) NOT NULL COMMENT '支付金额',
+    pay_status TINYINT NOT NULL DEFAULT 0 COMMENT '支付状态：0-支付中，1-支付成功，2-支付失败',
+    third_party_no VARCHAR(64) COMMENT '第三方支付流水号（支付宝/微信的交易号）',
+    pay_time TIMESTAMP NULL COMMENT '支付时间',
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    
+    -- 外键约束
+    FOREIGN KEY (order_id) REFERENCES `orders`(id) ON DELETE CASCADE,
+    
+    -- 索引
+    INDEX idx_order_id (order_id) COMMENT '订单ID索引',
+    INDEX idx_payment_no (payment_no) COMMENT '支付流水号索引',
+    INDEX idx_third_party_no (third_party_no) COMMENT '第三方支付流水号索引'
+) COMMENT='支付记录表，记录订单支付信息';

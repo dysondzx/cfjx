@@ -1,0 +1,28 @@
+.f-color {
+	color: #636263;
+}
+.f-active-color {
+	color: #49BDFB;
+}
+.bg-color {
+	background-color: #42B7FB;
+}
+
+/* 隐藏页面滚动条但保留滚动功能 */
+::-webkit-scrollbar {  
+    display: none;  
+    width: 0 !important;  
+    height: 0 !important;  
+    -webkit-appearance: none;  
+    background: transparent;  
+}
+
+/* 兼容Firefox */
+html {
+  scrollbar-width: none;
+}
+
+/* 在小程序中，* 选择器不被支持，改用具体元素选择器 */
+page, view, text, image, swiper, swiper-item, scroll-view, button, input, textarea, label, form, navigator, picker, picker-view, radio, checkbox, switch, slider, video, canvas, map, cover-view, cover-image {
+	box-sizing: border-box;
+}
