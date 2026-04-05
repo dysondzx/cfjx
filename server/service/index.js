@@ -1,3 +1,6 @@
+const cacheService = require('./cache');
+const { CACHE_KEYS, CACHE_TTL } = require('../config/cacheConfig');
+
 /**
  * 首页相关的路由处理函数
  * @param {Object} router - Koa路由实例
@@ -8,10 +11,16 @@ function setupIndexRoutes(router, pool) {
      * 获取首页顶部导航栏数据
      * @route GET /api/index_list/top_bar
      */
-    router.get('/api/index_list/top_bar', ctx => {
-        ctx.body = {
-            code: 200,
-            data: [
+    router.get('/api/index_list/top_bar', async ctx => {
+        const cacheData = await cacheService.get(CACHE_KEYS.INDEX_TOP_BAR)
+        if(cacheData) {
+            ctx.body = {
+                code: 200,
+                data: cacheData
+            }
+            return
+        }
+        const topBarData = [
                 { id: 1, name: '推荐' },
                 { id: 2, name: '运动户外' },
                 { id: 3, name: '服饰内衣' },
@@ -20,6 +29,10 @@ function setupIndexRoutes(router, pool) {
                 { id: 6, name: '家居数码' },
                 { id: 7, name: '食品母婴' }
             ]
+        await cacheService.set(CACHE_KEYS.INDEX_TOP_BAR, topBarData, CACHE_TTL.INIFY_LIST)
+        ctx.body = {
+            code: 200,
+            data: topBarData
         }
     })
 

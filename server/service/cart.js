@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
 const authMiddleware = require('../middlewares/auth');
+const cacheService = require('./cache');
+const { CACHE_TTL } = require('../config/cacheConfig');
 
 function setupCartRoutes(router, pool) {
     // 查询用户购物车商品列表
@@ -13,6 +15,19 @@ function setupCartRoutes(router, pool) {
             // 解析token获取userId
             const decoded = jwt.decode(token);
             const userId = decoded.userId;
+
+            // 从缓存获取购物车数据
+            const cacheKey = `cart:list:${userId}`;
+            const cachedData = await cacheService.get(cacheKey);
+            if (cachedData) {
+                // 缓存数据存在，直接返回
+                ctx.body = {
+                    code: 200,
+                    message: '查询成功',
+                    data: cachedData
+                };
+                return;
+            }
             
             // 查询该用户的购物车商品列表
             let sql = `SELECT 
@@ -67,6 +82,7 @@ function setupCartRoutes(router, pool) {
                 });
             });
             
+            await cacheService.set(cacheKey, groupedCartData, CACHE_TTL.CLASSIFY_LIST)
             ctx.body = {
                 code: 200,
                 message: '查询成功',
@@ -109,6 +125,10 @@ function setupCartRoutes(router, pool) {
                     'UPDATE cart SET num = ? WHERE id = ?',
                     [newNum, existingCart[0].id]
                 );
+
+                // 从购物车删除redis数据
+                const cacheKey = `cart:list:${userId}`;
+                await cacheService.del(cacheKey)
                 
                 ctx.body = {
                     code: 200,
@@ -124,6 +144,10 @@ function setupCartRoutes(router, pool) {
                     'INSERT INTO cart (userId, shopId, goodId, num, checked) VALUES (?, ?, ?, ?, ?)',
                     [userId, shopId, id, num, false]
                 );
+                
+                // 从购物车删除redis数据
+                const cacheKey = `cart:list:${userId}`;
+                await cacheService.del(cacheKey)
                 
                 ctx.body = {
                     code: 200,
@@ -159,6 +183,10 @@ function setupCartRoutes(router, pool) {
                 [checked?1:0, userId, goodId]
             );
             
+            // 从购物车删除redis数据
+            const cacheKey = `cart:list:${userId}`;
+            await cacheService.del(cacheKey)
+
             ctx.body = {
                 code: 200,
                 message: '更新成功'
@@ -189,6 +217,10 @@ function setupCartRoutes(router, pool) {
                 'UPDATE cart SET num = ? WHERE userId = ? AND goodId = ?',
                 [num, userId, goodId]
             );
+
+            // 从购物车删除redis数据
+            const cacheKey = `cart:list:${userId}`;
+            await cacheService.del(cacheKey)
             
             ctx.body = {
                 code: 200,
@@ -236,6 +268,10 @@ function setupCartRoutes(router, pool) {
                 `UPDATE cart SET checked = ? WHERE userId = ? AND goodId IN (${placeholders})`,
                 params
             );
+
+            // 从购物车删除redis数据
+            const cacheKey = `cart:list:${userId}`;
+            await cacheService.del(cacheKey)
             
             ctx.body = {
                 code: 200,
@@ -283,6 +319,10 @@ function setupCartRoutes(router, pool) {
                 `DELETE FROM cart WHERE userId = ? AND goodId IN (${placeholders})`,
                 params
             );
+            
+            // 从购物车删除redis数据
+            const cacheKey = `cart:list:${userId}`;
+            await cacheService.del(cacheKey)
             
             ctx.body = {
                 code: 200,

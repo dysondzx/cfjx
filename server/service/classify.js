@@ -1,4 +1,6 @@
 const authMiddleware = require('../middlewares/auth');
+const cacheService = require('./cache');
+const { CACHE_KEYS, CACHE_TTL } = require('../config/cacheConfig');
 
 /**
  * 分类和商品相关的路由处理函数
@@ -23,10 +25,23 @@ function setupClassifyRoutes(router, pool) {
      * 查询所有分类条目
      * @route GET /api/classify/classifies
      */
-    router.get('/api/classify/classifies', ctx => {
-        ctx.body = {
-            code: 200,
-            data: [{
+    router.get('/api/classify/classifies', async ctx => {
+        const cacheKey = CACHE_KEYS.CLASSIFY_LIST;
+        
+        try {
+            // 尝试从缓存获取数据
+            const cachedData = await cacheService.get(cacheKey);
+            
+            if (cachedData) {
+                ctx.body = {
+                    code: 200,
+                    data: cachedData
+                };
+                return;
+            }
+            
+            // 缓存未命中，获取原始数据
+            const classifyData = [{
                     id: 1,
                     name: '家居家纺'
                 }, {
@@ -87,6 +102,17 @@ function setupClassifyRoutes(router, pool) {
                     id: 20,
                     name: '礼品鲜花'
                 }]
+            
+            // 设置缓存
+            await cacheService.set(cacheKey, classifyData, CACHE_TTL.CLASSIFY_LIST);
+            
+            ctx.body = {
+                code: 200,
+                data: classifyData
+            };
+            
+        } catch (error) {
+            console.error('分类列表查询错误:', error);
         }
     })
 
