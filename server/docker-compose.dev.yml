@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  # 后端应用服务（开发模式）
+  backend:
+    build: .
+    container_name: cfjx-backend-dev
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      # 数据库配置
+      - DB_HOST=host.docker.internal
+      - DB_USER=root
+      - DB_PASSWORD=123456
+      - DB_NAME=cfjx_db
+      # Redis配置
+      - REDIS_URL=redis://host.docker.internal:6379
+    volumes:
+      - .:/app  # 挂载代码目录，支持热重载
+      - /app/node_modules  # 避免覆盖容器内的node_modules
+    restart: unless-stopped
+    networks:
+      - cfjx-dev-network
+
+# 网络定义
+networks:
+  cfjx-dev-network:
+    driver: bridge

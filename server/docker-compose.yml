@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  # 后端应用服务
+  backend:
+    build: .
+    container_name: cfjx-backend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      # 数据库配置
+      - DB_HOST=mysql
+      - DB_USER=root
+      - DB_PASSWORD=123456
+      - DB_NAME=cfjx_db
+      # Redis配置
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - mysql
+      - redis
+    restart: unless-stopped
+    networks:
+      - cfjx-network
+
+  # MySQL数据库服务
+  mysql:
+    image: mysql:8.0
+    container_name: cfjx-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=123456
+      - MYSQL_DATABASE=cfjx_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./sql.txt:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+    networks:
+      - cfjx-network
+
+  # Redis缓存服务
+  redis:
+    image: redis:7-alpine
+    container_name: cfjx-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - cfjx-network
+
+# 数据卷定义
+volumes:
+  mysql_data:
+  redis_data:
+
+# 网络定义
+networks:
+  cfjx-network:
+    driver: bridge
