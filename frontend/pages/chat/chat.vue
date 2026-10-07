@@ -126,7 +126,7 @@
 		}
 	}
 	.msg-user {
-		justify-content: flex-end;
+		justify-content: flex-start;
 		flex-direction: row-reverse;
 		.avatar {
 			background-color: #42b7fb;
