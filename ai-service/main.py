@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 from dotenv import load_dotenv
 
@@ -22,6 +23,8 @@ app.add_middleware(
 
 class ChatRequest(BaseModel):
     question: str
+    # 由 Node 后端校验 JWT 后传入；FAQ 问答可为空，订单查询必填
+    user_id: Optional[int] = None
 
 
 class ChatResponse(BaseModel):
@@ -30,8 +33,8 @@ class ChatResponse(BaseModel):
 
 @app.post("/chat", response_model=ChatResponse)
 def chat(req: ChatRequest):
-    """智能客服问答接口（第一版整段返回）。"""
-    answer = chain.ask(req.question)
+    """智能客服问答接口（整段返回）。"""
+    answer = chain.ask(req.question, req.user_id)
     return ChatResponse(answer=answer)
 
 

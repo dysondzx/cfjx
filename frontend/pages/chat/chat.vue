@@ -1,5 +1,10 @@
 <template>
 	<view class="chat">
+		<view class="login-tip" v-if="!loginStatus" @tap="goLogin">
+			<uni-icons type="info" size="16" color="#e6a23c"></uni-icons>
+			<text class="login-tip-text">登录后可查询您的订单</text>
+		</view>
+
 		<scroll-view class="msg-list" scroll-y :scroll-into-view="scrollTo" scroll-with-animation>
 			<view
 				v-for="(m, i) in messages"
@@ -22,7 +27,7 @@
 			<input
 				class="input"
 				v-model="input"
-				placeholder="请输入你的问题"
+				placeholder="如：怎么退货？我的订单到哪了？"
 				confirm-type="send"
 				:disabled="loading"
 				@confirm="send"
@@ -36,14 +41,28 @@
 
 <script setup>
 	import {ref, nextTick} from 'vue'
+	import {storeToRefs} from 'pinia'
 	import request from '@/common/js/request.js'
+	import {useUserStore} from '@/store/user.js'
+
+	const userStore = useUserStore()
+	const {loginStatus} = storeToRefs(userStore)
 
 	const messages = ref([
-		{ role: 'assistant', content: '您好，我是智能客服，请问有什么可以帮您？' }
+		{
+			role: 'assistant',
+			content: '您好，我是智能客服，请问有什么可以帮您？\n您可以问我退换货、物流等政策，登录后还能查询您的订单。'
+		}
 	])
 	const input = ref('')
 	const scrollTo = ref('')
 	const loading = ref(false)
+
+	function goLogin() {
+		uni.navigateTo({
+			url: '/pages/login/login'
+		})
+	}
 
 	async function send() {
 		const q = input.value.trim()
@@ -87,6 +106,18 @@
 		flex-direction: column;
 		background-color: #f5f5f5;
 	}
+	.login-tip {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 16rpx 24rpx;
+		background-color: #fdf6ec;
+		.login-tip-text {
+			margin-left: 8rpx;
+			font-size: 24rpx;
+			color: #e6a23c;
+		}
+	}
 	.msg-list {
 		flex: 1;
 		overflow: hidden;
@@ -115,6 +146,7 @@
 			font-size: 28rpx;
 			line-height: 1.6;
 			word-break: break-all;
+			white-space: pre-wrap;
 			margin: 0 16rpx;
 		}
 	}

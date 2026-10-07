@@ -1,3 +1,5 @@
+const optionalAuth = require('../middlewares/optionalAuth');
+
 /**
  * 智能客服相关的路由处理函数
  * @param {Object} router - Koa路由实例
@@ -7,9 +9,10 @@ function setupChatRoutes(router, pool) {
 	/**
 	 * 智能客服问答
 	 * @route POST /api/chat
-	 * 说明：仅做转发，真正的 RAG 检索与大模型生成由 Python AI 服务完成
+	 * 说明：仅做转发；RAG 检索、大模型生成、订单查询均由 Python AI 服务完成。
+	 * 鉴权：可选鉴权——游客也能咨询规则类问题，但查询订单需要登录。
 	 */
-	router.post('/api/chat', async ctx => {
+	router.post('/api/chat', optionalAuth, async ctx => {
 		try {
 			const { question } = ctx.request.body;
 			if (!question || !String(question).trim()) {
@@ -20,13 +23,19 @@ function setupChatRoutes(router, pool) {
 				return;
 			}
 
+			// 用户ID只从 JWT 解析结果获取，绝不使用前端提交的值
+			const userId = ctx.state.user ? ctx.state.user.userId : null;
+
 			const aiUrl = process.env.AI_SERVICE_URL || 'http://localhost:8000';
 			const resp = await fetch(`${aiUrl}/chat`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
 				},
-				body: JSON.stringify({ question: String(question).trim() })
+				body: JSON.stringify({
+					question: String(question).trim(),
+					user_id: userId
+				})
 			});
 
 			if (!resp.ok) {
