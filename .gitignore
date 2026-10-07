@@ -1,5 +1,0 @@
-unpackage
-server/node_modules
-server/package-lock.json
-server/.env
-server/.env.prod

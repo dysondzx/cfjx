@@ -11,10 +11,13 @@ const defautOptions = {
 }
 export default function (options) {
 	return new Promise((resolve, reject) => {
-        uni.showLoading({
-            title: '加载中',
-            mask: true
-        })
+        const showLoading = options.loading !== false
+        if (showLoading) {
+            uni.showLoading({
+                title: '加载中',
+                mask: true
+            })
+        }
 		const token = uni.getStorageSync('token');
 		const header = Object.assign({}, defautOptions.header, options.header || {})
 		if(token) {
@@ -67,9 +70,11 @@ export default function (options) {
                 reject(err)
             },
             complete: () => {
-                setTimeout(() => {
-                    uni.hideLoading()
-                }, 500)
+                if (showLoading) {
+                    setTimeout(() => {
+                        uni.hideLoading()
+                    }, 500)
+                }
             }
 		})
 	})

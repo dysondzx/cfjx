@@ -236,6 +236,15 @@
 			{
 				"navigationBarTitleText" : "输入验证码"
 			}
+		},
+		{
+			"path" : "pages/chat/chat",
+			"style" : 
+			{
+				"navigationBarTitleText" : "智能客服",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
+			}
 		}
 	],
 	// "tabBar": {

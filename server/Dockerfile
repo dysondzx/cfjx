@@ -1,5 +1,6 @@
 # 使用官方Node.js镜像作为基础镜像
-FROM node:16-alpine
+# 说明：Node 18+ 才原生支持全局 fetch，智能客服接口依赖 fetch 转发请求
+FROM node:18-alpine
 
 # 设置工作目录
 WORKDIR /app

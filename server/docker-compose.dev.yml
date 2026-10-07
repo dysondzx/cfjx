@@ -13,13 +13,32 @@ services:
       # 数据库配置
       - DB_HOST=host.docker.internal
       - DB_USER=root
-      - DB_PASSWORD=123456
+      - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=cfjx_db
       # Redis配置
       - REDIS_URL=redis://host.docker.internal:6379
     volumes:
       - .:/app  # 挂载代码目录，支持热重载
       - /app/node_modules  # 避免覆盖容器内的node_modules
+    restart: unless-stopped
+    networks:
+      - cfjx-dev-network
+
+  # 智能客服 AI 服务（开发模式）
+  ai-service:
+    build: ../ai-service
+    container_name: cfjx-ai-service-dev
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - DEEPSEEK_BASE_URL=https://api.deepseek.com
+      - LLM_MODEL=deepseek-chat
+      - EMBEDDING_MODEL=BAAI/bge-small-zh-v1.5
+      - CHROMA_DIR=./data/chroma
+    volumes:
+      - ../ai-service/data:/app/data
     restart: unless-stopped
     networks:
       - cfjx-dev-network

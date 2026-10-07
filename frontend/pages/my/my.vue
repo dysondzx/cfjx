@@ -97,9 +97,11 @@
 					<text class="iconfont icon-gengduo"></text>
 				</view>
 			</view>
-			<view class="other-item">
+			<view class="other-item" @tap="goToChat">
 				<view class="item-left">
-					<text class="item-icon">🎧</text>
+					<view class="item-icon">
+						<uni-icons type="headphones" color="#9254de" size="22"></uni-icons>
+					</view>
 					<text class="item-name">联系客服</text>
 				</view>
 				<view class="item-right">
@@ -138,6 +140,11 @@
 	function goToMyOrder() {
 		uni.navigateTo({
 			url: '/pages/my-order/my-order'
+		});
+	}
+	function goToChat() {
+		uni.navigateTo({
+			url: '/pages/chat/chat'
 		});
 	}
 	function goLogin() {

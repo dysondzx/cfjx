@@ -16,6 +16,7 @@ const setupAddressRoutes = require('./service/address');
 const setupCartRoutes = require('./service/cart');
 const setupOrderRoutes = require('./service/orders');
 const setupPaymentRoutes = require('./service/payment');
+const setupChatRoutes = require('./service/chat');
 
 
 // 创建连接池
@@ -45,6 +46,7 @@ setupAddressRoutes(router, pool);
 setupCartRoutes(router, pool);
 setupOrderRoutes(router, pool);
 setupPaymentRoutes(router, pool);
+setupChatRoutes(router, pool);
 
 // 放到路由前面
 app.use(bodyParser());
