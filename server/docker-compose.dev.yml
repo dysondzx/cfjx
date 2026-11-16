@@ -17,6 +17,10 @@ services:
       - DB_NAME=cfjx_db
       # Redis配置
       - REDIS_URL=redis://host.docker.internal:6379
+      # 智能客服与 AIGC 服务
+      - AI_SERVICE_URL=http://ai-service:8000
+      - AIGC_IMAGE_QUOTA=${AIGC_IMAGE_QUOTA:-5}
+      - AIGC_VIDEO_QUOTA=${AIGC_VIDEO_QUOTA:-1}
     volumes:
       - .:/app  # 挂载代码目录，支持热重载
       - /app/node_modules  # 避免覆盖容器内的node_modules
@@ -43,6 +47,12 @@ services:
       - DB_USER=root
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=cfjx_db
+      # 火山方舟 AIGC（Seedream 生图 / Seedance 生视频）
+      - ARK_API_KEY=${ARK_API_KEY}
+      - ARK_BASE_URL=https://ark.cn-beijing.volces.com/api/v3
+      - ARK_IMAGE_MODEL=${ARK_IMAGE_MODEL:-doubao-seedream-4-0-250828}
+      - ARK_VIDEO_MODEL=${ARK_VIDEO_MODEL:-doubao-seedance-1-0-pro-250528}
+      - AIGC_OUTPUT_DIR=./data/outputs
     volumes:
       - ../ai-service/data:/app/data
     restart: unless-stopped

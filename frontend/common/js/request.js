@@ -29,7 +29,8 @@ export default function (options) {
 			method: options.method || defautOptions.method,
 			header: header,
 			dataType: options.dataType || defautOptions.dataType,
-			timeout: 60000,
+			// AIGC 生图/生视频耗时较长，调用方可单独放大超时
+			timeout: options.timeout || 60000,
             success: (res) => {
                 if (res.statusCode === 200) {
                     resolve(res.data)

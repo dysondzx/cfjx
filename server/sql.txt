@@ -238,3 +238,25 @@ CREATE TABLE IF NOT EXISTS payment_record (
     INDEX idx_payment_no (payment_no) COMMENT '支付流水号索引',
     INDEX idx_third_party_no (third_party_no) COMMENT '第三方支付流水号索引'
 ) COMMENT='支付记录表，记录订单支付信息';
+
+-- AIGC 素材生成任务表
+-- 图片为同步生成，落表用于素材库沉淀；视频为方舟异步任务，需落表供前端轮询
+CREATE TABLE IF NOT EXISTS aigc_task (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '任务ID',
+    user_id INT NOT NULL COMMENT '用户ID',
+    good_id INT NULL COMMENT '关联商品ID',
+    task_type TINYINT NOT NULL COMMENT '任务类型：1-图片，2-视频',
+    prompt TEXT COMMENT '实际下发的绘图/视频提示词',
+    caption VARCHAR(500) COMMENT 'AI 生成的营销文案',
+    status TINYINT NOT NULL DEFAULT 0 COMMENT '状态：0-排队，1-生成中，2-成功，3-失败',
+    provider VARCHAR(32) DEFAULT 'ark' COMMENT 'AIGC 供应商',
+    provider_task_id VARCHAR(128) COMMENT '第三方（火山方舟）任务ID',
+    result_path VARCHAR(300) COMMENT '产物相对路径',
+    cover_path VARCHAR(300) COMMENT '视频封面相对路径',
+    error_msg VARCHAR(500) COMMENT '失败原因',
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+
+    INDEX idx_user_time (user_id, create_time),
+    UNIQUE KEY uk_provider_task (provider_task_id)
+) COMMENT='AIGC 素材生成任务表';

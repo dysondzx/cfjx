@@ -19,6 +19,9 @@ services:
       - REDIS_URL=redis://redis:6379
       # 智能客服AI服务
       - AI_SERVICE_URL=http://ai-service:8000
+      # AIGC 每日生成配额（0 表示不限制）
+      - AIGC_IMAGE_QUOTA=${AIGC_IMAGE_QUOTA:-5}
+      - AIGC_VIDEO_QUOTA=${AIGC_VIDEO_QUOTA:-1}
     depends_on:
       - mysql
       - redis
@@ -74,6 +77,12 @@ services:
       - DB_USER=root
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=cfjx_db
+      # 火山方舟 AIGC（Seedream 生图 / Seedance 生视频）
+      - ARK_API_KEY=${ARK_API_KEY}
+      - ARK_BASE_URL=https://ark.cn-beijing.volces.com/api/v3
+      - ARK_IMAGE_MODEL=${ARK_IMAGE_MODEL:-doubao-seedream-4-0-250828}
+      - ARK_VIDEO_MODEL=${ARK_VIDEO_MODEL:-doubao-seedance-1-0-pro-250528}
+      - AIGC_OUTPUT_DIR=./data/outputs
     volumes:
       - ../ai-service/data:/app/data
     depends_on:

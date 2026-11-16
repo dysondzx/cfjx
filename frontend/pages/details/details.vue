@@ -17,6 +17,13 @@
 			<view class="oprice">¥{{goodsInfo.oprice}}</view>
 			<view class="keywords">{{goodsInfo.name}}</view>
 		</view>
+		<view class="aigc-bar" @tap="openAigc">
+			<view class="aigc-left">
+				<view class="aigc-title">AI 营销素材</view>
+				<view class="aigc-desc">一键生成商品海报 / 种草短视频</view>
+			</view>
+			<view class="aigc-btn">立即生成</view>
+		</view>
 		<view class="description">
 			<image src="/static/image/classify/detail1.jpg" mode="widthFix"></image>
 			<image src="/static/image/classify/detail2.jpg" mode="widthFix"></image>
@@ -27,7 +34,7 @@
 		<Card cardTitle="看了又看"/>
 		<CommodityList :dataList="dataList"/>
 		<view class="details-footer">
-			<view class="iconfont icon-xiaoxi"></view>
+			<view class="iconfont icon-xiaoxi" @tap="openAigc"></view>
 			<view class="iconfont icon-3" @tap="toShopCart"></view>
 			<view class="purchase shopCart" @tap="popAddCart">加入购物车</view>
 			<view class="purchase buy" @tap="popBuy">立即购买</view>
@@ -269,6 +276,25 @@
 			url: '/pages/shop-cart/shop-cart',
 		})
 	}
+
+	// 携带商品上下文跳转智能客服，由 AI 服务按商品ID生成海报/短视频
+	const openAigc = () => {
+		if (!detailId.value) {
+			uni.showToast({
+				title: '商品加载中，请稍候',
+				icon: 'none'
+			})
+			return
+		}
+		uni.showActionSheet({
+			itemList: ['生成 AI 营销海报', '生成种草短视频'],
+			success: ({ tapIndex }) => {
+				uni.navigateTo({
+					url: `/pages/chat/chat?goodId=${detailId.value}&auto=${tapIndex === 0 ? 'poster' : 'video'}`
+				})
+			}
+		})
+	}
 </script>
 
 <style lang="scss" scoped>
@@ -316,6 +342,36 @@
 		.description {
 			image {
 				width: 100%;
+			}
+		}
+		.aigc-bar {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			margin: 20rpx 24rpx 0;
+			padding: 24rpx 28rpx;
+			border-radius: 16rpx;
+			background: linear-gradient(135deg, #eef6ff 0%, #f6f0ff 100%);
+			.aigc-left {
+				display: flex;
+				flex-direction: column;
+			}
+			.aigc-title {
+				font-size: 30rpx;
+				font-weight: 600;
+				color: #333333;
+			}
+			.aigc-desc {
+				margin-top: 6rpx;
+				font-size: 24rpx;
+				color: #7a8ba6;
+			}
+			.aigc-btn {
+				padding: 12rpx 28rpx;
+				border-radius: 999rpx;
+				background-color: #42b7fb;
+				color: #ffffff;
+				font-size: 26rpx;
 			}
 		}
 		.details-footer {

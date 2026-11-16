@@ -245,6 +245,15 @@
 				"navigationBarBackgroundColor": "#ffffff",
 				"navigationBarTextStyle": "black"
 			}
+		},
+		{
+			"path" : "pages/aigc/aigc",
+			"style" : 
+			{
+				"navigationBarTitleText" : "AI 创作中心",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
+			}
 		}
 	],
 	// "tabBar": {

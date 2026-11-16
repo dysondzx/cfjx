@@ -57,6 +57,15 @@ DB_NAME=cfjx_db
 # Redis配置
 REDIS_HOST=redis
 REDIS_PORT=6379
+REDIS_URL=redis://redis:6379
+
+# 智能客服与 AIGC
+AI_SERVICE_URL=http://ai-service:8000
+ARK_API_KEY=方舟key
+ARK_IMAGE_MODEL=doubao-seedream-4-0-250828
+ARK_VIDEO_MODEL=doubao-seedance-1-0-pro-250528
+AIGC_IMAGE_QUOTA=5
+AIGC_VIDEO_QUOTA=1
 ```
 
 ### 或者通过环境变量覆盖（推荐）
@@ -74,10 +83,14 @@ docker-compose run -e DB_PASSWORD=password backend
 - 生产环境配置
 
 ### docker-compose.yml
-包含三个服务：
+包含四个服务：
 - **backend**: 应用服务（端口 3000）
 - **mysql**: 数据库服务（端口 3306）
 - **redis**: 缓存服务（端口 6379）
+- **ai-service**: 智能客服与 AIGC 服务（端口 8000，产物落盘到 `ai-service/data/outputs`）
+
+> AIGC 相关接口：`POST /api/aigc/poster`、`POST /api/aigc/video`、`GET /api/aigc/task/:id`、`GET /api/aigc/history`，以及资源反代 `/api/aigc/asset/*`。
+> 依赖 `aigc_task` 表，老库升级需手动执行 `sql.txt` 末尾的建表语句。
 
 ### .dockerignore
 忽略不必要的文件，减小镜像体积

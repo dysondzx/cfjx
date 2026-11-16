@@ -71,6 +71,28 @@ class CacheService {
     }
 
     /**
+     * 原子自增（用于配额/限流）
+     * 说明：首次自增时设置过期时间，保证「每日配额」能自动归零。
+     * @param {string} key - 缓存键
+     * @param {number} ttl - 过期时间（秒），默认 1 天
+     * @returns {Promise<number>} 自增后的值；Redis 不可用时返回 0
+     */
+    async incr(key, ttl = 86400) {
+        if (!this.isConnected) return 0;
+
+        try {
+            const value = await this.client.incr(key);
+            if (value === 1) {
+                await this.client.expire(key, ttl);
+            }
+            return value;
+        } catch (error) {
+            console.error('Cache incr error:', error);
+            return 0;
+        }
+    }
+
+    /**
      * 获取缓存
      * @param {string} key - 缓存键
      * @returns {Promise<any>}

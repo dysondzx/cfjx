@@ -1,7 +1,10 @@
-"""智能客服可调用的工具集，当前包含「订单查询」。
+"""智能客服可调用的工具集：订单查询 + 商品查询。
 
-安全约定：所有查询都必须以 user_id 作为过滤条件，
-该 user_id 由 Node 后端校验 JWT 后传入，绝不信任前端直接提交的值。
+安全约定：
+1. 订单查询必须以 user_id 作为过滤条件，该 user_id 由 Node 后端校验 JWT 后传入，
+   绝不信任前端直接提交的值。
+2. AIGC 素材生成所需的商品信息一律按 good_id 回查数据库，不采信前端描述，
+   避免被构造的提示词带偏生成内容。
 """
 
 from typing import Optional
@@ -23,6 +26,34 @@ PAY_TYPE = {1: "支付宝", 2: "微信"}
 
 def _fmt_time(value) -> str:
     return value.strftime("%Y-%m-%d %H:%M") if value else ""
+
+
+def query_goods(good_id: int) -> dict:
+    """按商品ID查询用于素材生成的基础信息。
+
+    :param good_id: 商品ID（由 Node 后端从请求中校验后传入）
+    :raises ValueError: 商品不存在
+    """
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT g.id, g.name, g.imgUrl, g.cprice, g.oprice, g.discount,
+                       s.name AS shopName
+                FROM goods g
+                JOIN shop s ON g.shopId = s.id
+                WHERE g.id = %s
+                """,
+                [good_id],
+            )
+            goods = cursor.fetchone()
+    finally:
+        conn.close()
+
+    if not goods:
+        raise ValueError("商品不存在")
+    return goods
 
 
 def query_user_orders(

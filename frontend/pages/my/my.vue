@@ -97,6 +97,18 @@
 					<text class="iconfont icon-gengduo"></text>
 				</view>
 			</view>
+			<view class="other-item" @tap="goToAigc">
+				<view class="item-left">
+					<view class="item-icon">
+						<uni-icons type="image" color="#42b7fb" size="22"></uni-icons>
+					</view>
+					<text class="item-name">AI 创作中心</text>
+				</view>
+				<view class="item-right">
+					<text class="item-count">海报/视频</text>
+					<text class="iconfont icon-gengduo"></text>
+				</view>
+			</view>
 			<view class="other-item" @tap="goToChat">
 				<view class="item-left">
 					<view class="item-icon">
@@ -145,6 +157,11 @@
 	function goToChat() {
 		uni.navigateTo({
 			url: '/pages/chat/chat'
+		});
+	}
+	function goToAigc() {
+		uni.navigateTo({
+			url: '/pages/aigc/aigc'
 		});
 	}
 	function goLogin() {
